@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPT-Powered Video Analyzer</title>
+</head>
+<body>
+    <h1>GPT-Powered Video Analyzer</h1>
+    <form id="videoForm">
+        <label for="videoUrl">YouTube Video URL:</label>
+        <input type="text" id="videoUrl" required>
+        <button type="submit">Transcribe Video</button>
+    </form>
+    <div id="transcript"></div>
+    
+    <form id="gptForm" style="display: none;">
+        <label for="prompt">Ask a Question:</label>
+        <input type="text" id="prompt" required>
+        <button type="submit">Ask GPT</button>
+    </form>
+    <div id="response"></div>
+
+    <script>
+        const videoForm = document.getElementById('videoForm');
+        const gptForm = document.getElementById('gptForm');
+
+        videoForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const videoUrl = document.getElementById('videoUrl').value;
+
+            const response = await fetch('/transcribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ video_url: videoUrl }),
+            });
+            const data = await response.json();
+            const transcriptDiv = document.getElementById('transcript');
+            
+            if (data.transcript) {
+                transcriptDiv.innerText = data.transcript;
+                gptForm.style.display = 'block';
+            } else if (data.error) {
+                transcriptDiv.innerText = data.error;
+                gptForm.style.display = 'none';
+            }
+        });
+
+        gptForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const prompt = document.getElementById('prompt').value;
+            const transcript = document.getElementById('transcript').innerText;
+
+            const response = await fetch('/ask_gpt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prompt: prompt, transcript: transcript }),
+            });
+            const data = await response.json();
+            document.getElementById('response').innerText = data.response;
+        });
+    </script>
+</body>
+</html>
